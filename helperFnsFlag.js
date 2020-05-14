@@ -3,7 +3,7 @@
 function init() {
 	mtot = 0.1;
 	g = 9.81;
-	ks = 3;
+	ks = 2;
 	kd = 0.1;
 	repulsionFactor = Math.pow(10,-1);
 	
