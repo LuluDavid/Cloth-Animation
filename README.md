@@ -14,7 +14,8 @@ All other parameters are indicated at the top of helperFns.js if some wants to m
 it seems the entropy never stops to go up and that the result is a bit chaotic if you wait long
 enough, maybe I'll try to add the damping force one day to correct it.
 
-I also have a flag configuration for the cloth, which I'll try to add soon in helperFnsFlag.js.
+I also have a flag configuration for the cloth, which you can set up quickly just replacing the import 
+of helperFns.js with helperFnsFlag.js in main.html.
 
 ## How to make it work
 
