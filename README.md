@@ -2,6 +2,8 @@
 
 This project is a THREE.js attempt to simulate the physics involved in a cloth material.
 
+<img src="./pictures/cloth1.png" width=400 height=400>  <img src="./pictures/cloth2.png" width=400 height=400>
+
 To do so, the particles are modelized as follows :
 * Each particle is a just a point of mass m
 * Each of these particles are connected by springs
@@ -15,7 +17,10 @@ it seems the entropy never stops to go up and that the result is a bit chaotic i
 enough, maybe I'll try to add the damping force one day to correct it.
 
 I also have a flag configuration for the cloth, which you can set up quickly just replacing the import 
-of helperFns.js with helperFnsFlag.js in main.html.
+of helperFns.js with helperFnsFlag.js in main.html (carreful though, it diverges quickly).
+<p align="center">
+  <img src="./pictures/flag.png">
+</p>
 
 ## How to make it work
 
