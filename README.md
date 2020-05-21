@@ -1,6 +1,7 @@
 ## THREE.js cloth animation
 
 This project is a THREE.js attempt to simulate the physics involved in a cloth material.
+You can visualize it quite simply <a href="https://luludavid.github.io/THREE.js-Cloth-animation/main.html">here</a>.
 
 <img src="./pictures/cloth1.png" width=400 height=400>  <img src="./pictures/cloth2.png" width=400 height=400>
 
