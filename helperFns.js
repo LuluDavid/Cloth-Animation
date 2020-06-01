@@ -8,8 +8,8 @@ function init() {
 	repulsionFactor = 0
 	
 	continuityRatio = 1
-	vent = 3
-	directionVent = new THREE.Vector3(0,1,0).normalize();
+	wind = 3
+	windDirection = new THREE.Vector3(0,1,0).normalize();
 	deltaT_acc = 0.01;
 	clothWidth = 15;
 	clothHeight = 20;
@@ -18,6 +18,12 @@ function init() {
 	l0Diag = l0Edge*Math.sqrt(2);
 	N = clothWidth*clothHeight*densityPerMeter
 	m = 0.001;
+	maxStrecht = 1.5;
+	minStrecht = 0.65;
+	l0EdgeMax = maxStrecht*l0Edge;
+	l0EdgeMin = minStrecht*l0Edge;
+	l0DiagMax = maxStrecht*l0Diag;
+	l0DiagMin = minStrecht*l0Diag;
 	
 
 	// Build scene
@@ -103,7 +109,7 @@ function animateCloth(){
 	//var F,a;
 	var dToL,dToR,dToT,dToB,dToTL,dToTR,dToBL,dToBR;
 	var width = cloth.children[0].children.length;
-	vent = (1-continuityRatio)*Math.random(vent)+vent*continuityRatio
+	wind = (1-continuityRatio)*Math.random(wind)+wind*continuityRatio
 
 	// FIRST LINE 
 
@@ -124,7 +130,7 @@ function animateCloth(){
 
 	F = F2.clone().add(F3).add(F5);
 
-	a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(vent*directionVent.x,vent*directionVent.y,vent*directionVent.z-g));
+	a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(wind*windDirection.x,wind*windDirection.y,wind*windDirection.z-g));
 
 	currentSpeed.addScaledVector(a,deltaT_acc);
 
@@ -150,7 +156,7 @@ function animateCloth(){
 		F = F1.clone().add(F2).add(F3).add(F4).add(F5);
 
 
-		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(vent*directionVent.x,vent*directionVent.y,vent*directionVent.z-g));
+		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(wind*windDirection.x,wind*windDirection.y,wind*windDirection.z-g));
 
 		currentSpeed.addScaledVector(a,deltaT_acc);
 	}
@@ -169,7 +175,7 @@ function animateCloth(){
 
 	F = F1.clone().add(F3).add(F4);
 
-	a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(vent*directionVent.x,vent*directionVent.y,vent*directionVent.z-g));
+	a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(wind*windDirection.x,wind*windDirection.y,wind*windDirection.z-g));
 
 	currentSpeed.addScaledVector(a,deltaT_acc);
 
@@ -199,7 +205,7 @@ function animateCloth(){
 
 		F = F2.clone().add(F3).add(F5).add(F6).add(F8);
 
-		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(vent*directionVent.x,vent*directionVent.y,vent*directionVent.z-g));
+		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(wind*windDirection.x,wind*windDirection.y,wind*windDirection.z-g));
 
 		currentSpeed.addScaledVector(a,deltaT_acc);
 
@@ -230,7 +236,7 @@ function animateCloth(){
 
 			F = F1.clone().add(F2).add(F3).add(F4).add(F5).add(F6).add(F7).add(F8);
 
-			a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(vent*directionVent.x,vent*directionVent.y,vent*directionVent.z-g));
+			a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(wind*windDirection.x,wind*windDirection.y,wind*windDirection.z-g));
 
 			currentSpeed.addScaledVector(a,deltaT_acc);
 		}
@@ -253,7 +259,7 @@ function animateCloth(){
 
 		F = F1.clone().add(F3).add(F4).add(F6).add(F7);
 
-		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(vent*directionVent.x,vent*directionVent.y,vent*directionVent.z-g));
+		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(wind*windDirection.x,wind*windDirection.y,wind*windDirection.z-g));
 
 		currentSpeed.addScaledVector(a,deltaT_acc);
 	}
@@ -282,7 +288,7 @@ function animateCloth(){
 
 		F = F1.clone().add(F2).add(F6).add(F7).add(F8);
 
-		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(vent*directionVent.x,vent*directionVent.y,vent*directionVent.z-g));
+		a = F.clone().multiplyScalar(1/m).add(new THREE.Vector3(wind*windDirection.x,wind*windDirection.y,wind*windDirection.z-g));
 
 		currentSpeed.addScaledVector(a,deltaT_acc);
 	}
@@ -291,15 +297,148 @@ function animateCloth(){
 }
 
 function updatePosition(cloth){
+	var dToL,dToR,dToT,dToB,dToTL,dToTR,dToBL,dToBR;
+	var currentLine, nextLine;
+	var currentPointPosition,currentSpeed;
 	var height = cloth.children.length
 	var width = cloth.children[0].children.length;
-	for (let i=0;i<height;i++){
-		currentLine = cloth.children[i];
-		for (let j=0;j<width;j++){
-			currentPoint = currentLine.children[j];
-			currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+
+	// FIRST LINE 
+
+	currentLine = cloth.children[0]
+	nextLine = cloth.children[1]
+
+	// LEFT PARTICULE
+	currentPoint = currentLine.children[0];
+	currentPointPosition = currentPoint.position.clone().addScaledVector(currentPoint.speed,deltaT_acc);
+
+	dToR = currentPointPosition.distanceTo( currentLine.children[1].position )
+	dToT = currentPointPosition.distanceTo( nextLine.children[0].position )
+	dToTR = currentPointPosition.distanceTo( nextLine.children[1].position )
+	if (l0EdgeMin <= dToR && dToR <= l0EdgeMax && l0EdgeMin <= dToT && dToT <= l0EdgeMax && l0DiagMin <= dToTR && dToTR <= l0DiagMax){
+		currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+	}
+
+	// CENTRAL PARTICULES
+
+	for (let j=1;j<width-1;j++){
+
+		currentPoint = currentLine.children[j];
+		currentPointPosition = currentPoint.position.clone().addScaledVector(currentPoint.speed,deltaT_acc);
+
+		dToL = currentPointPosition.distanceTo( currentLine.children[j-1].position )
+		dToR = currentPointPosition.distanceTo( currentLine.children[j+1].position )
+		dToT = currentPointPosition.distanceTo( nextLine.children[j].position )
+		dToTL = currentPointPosition.distanceTo( nextLine.children[j-1].position )
+		dToTR = currentPointPosition.distanceTo( nextLine.children[j+1].position )
+
+		if (l0EdgeMin <= dToL && dToL <= l0EdgeMax && l0EdgeMin <= dToR && dToR <= l0EdgeMax && l0EdgeMin <= dToT && dToT <= l0EdgeMax){
+			if (l0DiagMin <= dToTL && dToTL <= l0DiagMax && l0DiagMin <= dToTR && dToTR <= l0DiagMax){
+				currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+			}
 		}
 	}
+
+	// RIGHT PARTICULE
+	currentPoint = currentLine.children[width-1];
+	currentPointPosition = currentPoint.position.clone().addScaledVector(currentPoint.speed,deltaT_acc);
+
+	dToL = currentPointPosition.distanceTo( currentLine.children[width-2].position )
+	dToT = currentPointPosition.distanceTo( nextLine.children[width-1].position )
+	dToTL = currentPointPosition.distanceTo( nextLine.children[width-2].position )
+	if (l0EdgeMin <= dToL && dToL <= l0EdgeMax && l0EdgeMin <= dToR  && dToR <= l0EdgeMax){
+		currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+	}
+
+	// FOR EACH CENTRAL LINE
+
+	for (let i=1; i<height-1;i++){
+
+		previousLine = cloth.children[i-1]
+		currentLine = cloth.children[i]
+		nextLine = cloth.children[i+1]
+
+		// LEFT PARTICULE
+		currentPoint = currentLine.children[0];
+		currentPointPosition = currentPoint.position.clone().addScaledVector(currentPoint.speed,deltaT_acc);
+
+		dToR = currentPointPosition.distanceTo( currentLine.children[1].position )
+		dToT = currentPointPosition.distanceTo( nextLine.children[0].position )
+		dToTR = currentPointPosition.distanceTo( nextLine.children[1].position )
+		dToB = currentPointPosition.distanceTo( previousLine.children[0].position )
+		dToBR = currentPointPosition.distanceTo( previousLine.children[1].position )
+
+		if (l0EdgeMin <= dToR && dToR <= l0EdgeMax && l0EdgeMin <= dToT && dToT <= l0EdgeMax && l0EdgeMin <= dToB && dToB <= l0EdgeMax){
+			if (l0DiagMin <= dToTR && dToTR <= l0DiagMax && l0DiagMin <= dToBR && dToBR <= l0DiagMax){
+				currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+			}
+		}
+
+		// ALL CENTER PARTICULES
+
+		for (let j=1;j<width-1;j++){
+
+			currentPoint = currentLine.children[j];
+			currentPointPosition = currentPoint.position.clone().addScaledVector(currentPoint.speed,deltaT_acc);
+
+			dToL = currentPointPosition.distanceTo( currentLine.children[j-1].position )
+			dToR = currentPointPosition.distanceTo( currentLine.children[j+1].position )
+			dToT = currentPointPosition.distanceTo( nextLine.children[j].position )
+			dToTL = currentPointPosition.distanceTo( nextLine.children[j-1].position )
+			dToTR = currentPointPosition.distanceTo( nextLine.children[j+1].position )
+			dToB = currentPointPosition.distanceTo( previousLine.children[j].position )
+			dToBL = currentPointPosition.distanceTo( previousLine.children[j-1].position )
+			dToBR = currentPointPosition.distanceTo( previousLine.children[j+1].position )
+
+			if (l0EdgeMin <= dToR && dToR <= l0EdgeMax && l0EdgeMin <= dToT && dToT <= l0EdgeMax 
+				&& l0EdgeMin <= dToB && dToB <= l0EdgeMax && l0EdgeMin <= dToL && dToL <= l0EdgeMax){
+				if (l0DiagMin <= dToTR && dToTR <= l0DiagMax && l0DiagMin <= dToBR && dToBR <= l0DiagMax 
+					&& l0DiagMin <= dToTL && dToTL <= l0DiagMax && l0DiagMin <= dToBL && dToBL <= l0DiagMax){
+					currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+				}
+			}
+		}
+
+		// RIGHT PARTICULE
+		currentPoint = currentLine.children[width-1];
+		currentPointPosition = currentPoint.position.clone().addScaledVector(currentPoint.speed,deltaT_acc);
+
+		dToL = currentPointPosition.distanceTo( currentLine.children[width-2].position )
+		dToT = currentPointPosition.distanceTo( nextLine.children[width-1].position )
+		dToTL = currentPointPosition.distanceTo( nextLine.children[width-2].position )
+		dToB = currentPointPosition.distanceTo( previousLine.children[width-1].position )
+		dToBL = currentPointPosition.distanceTo( previousLine.children[width-2].position )
+
+		if (l0EdgeMin <= dToL && dToL <= l0EdgeMax && l0EdgeMin <= dToT && dToT <= l0EdgeMax && l0EdgeMin <= dToB && dToB <= l0EdgeMax){
+			if (l0DiagMin <= dToTL && dToTL <= l0DiagMax && l0DiagMin <= dToBL && dToBL <= l0DiagMax){
+				currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+			}
+		}
+	}
+	
+
+	// LAST LINE
+	currentLine = cloth.children[height-1]
+	previousLine = cloth.children[height-2]
+
+	for (let j=1;j<width-1;j++){
+
+		currentPoint = currentLine.children[j];
+		currentPointPosition = currentPoint.position.clone().addScaledVector(currentPoint.speed,deltaT_acc);
+
+		dToL = currentPointPosition.distanceTo( currentLine.children[j-1].position )
+		dToR = currentPointPosition.distanceTo( currentLine.children[j+1].position )
+		dToB = currentPointPosition.distanceTo( previousLine.children[j].position )
+		dToBL = currentPointPosition.distanceTo( previousLine.children[j-1].position )
+		dToBR = currentPointPosition.distanceTo( previousLine.children[j+1].position )
+
+		if (l0EdgeMin <= dToL && dToL <= l0EdgeMax && l0EdgeMin <= dToR && dToR <= l0EdgeMax && l0EdgeMin <= dToB && dToB <= l0EdgeMax){
+			if (l0DiagMin <= dToBL && dToBL <= l0DiagMax && l0DiagMin <= dToBR && dToBR <= l0DiagMax){
+				currentPoint.position.addScaledVector(currentPoint.speed,deltaT_acc);
+			}
+		}
+	}
+
 	scene.children[0] = drawMesh(cloth);
 }
 
